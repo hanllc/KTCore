@@ -3,14 +3,24 @@
 // Given a declarative statement of extract,
 // produce one or more SQL Statements
 
+
 open System
 open System.Collections.Generic
 open FSharp.Collections
-
+open KT.VarLangDSLModel
+(*
 type ExColumn() =
     [<DefaultValue>] val mutable Name : string
     [<DefaultValue>] val mutable ExColumnName : string
     [<DefaultValue>] val mutable DbObjectName : string
+*)
+//[<CLIMutable>]
+type ExColumn =
+    {
+        Name : string
+        ExColumnName : string
+        DbObjectName : string
+    }
 
 type ExTable() = 
     [<DefaultValue>] val mutable TableId : string
@@ -18,6 +28,13 @@ type ExTable() =
     member this.AddCol (col:ExColumn) =
                 let key = col.ExColumnName
                 exCols.Add(key, col)
+    member this.ColumnList = 
+        let mutable mylist = []
+        for entry in exCols do 
+            mylist <- entry.Value :: mylist
+        mylist
+
+
 
 type ExModel() = 
     [<DefaultValue>] val mutable ModelId : string
@@ -25,6 +42,12 @@ type ExModel() =
     member this.ExColumnList with get() = exColumnList
   
     let mutable ExTableDict = new Dictionary<string, ExTable>()
+    member this.ExTableList = 
+        let mutable mylist = []
+        for entry in ExTableDict do
+            mylist <- entry.Value :: mylist 
+        mylist
+
     member this.AddCol (col:ExColumn) =
             exColumnList <- col :: exColumnList
             let xtab =
@@ -57,7 +80,7 @@ let show label =
 
 
 let source = 1 
-
+(*
 let variable nameStr sourceKey tabStr = 
     let me = ExColumn()
     me.Name <- nameStr
@@ -65,7 +88,14 @@ let variable nameStr sourceKey tabStr =
     me.DbObjectName <- tabStr
     dsl_extract.AddCol me
     ()
-
+*)
+let variable nameStr sourceKey tabStr = 
+    dsl_extract.AddCol {
+        Name = nameStr;
+        ExColumnName = nameStr;
+        DbObjectName = tabStr
+    } 
+    
 
 //CAMA TREE CONFIG
 type NodeLabel() =
@@ -104,6 +134,20 @@ let associative = 200
 let containment = 201
 let link = 202
 
+let make_ctable_extract ( tm:ExTable ) = 
+    let tlist = List<ExtractColumn>()
+    for entry in tm.ColumnList do
+        let tcol = 
+            ExtractColumn(entry.Name, entry.ExColumnName, entry.DbObjectName)
+        tlist.Add (tcol)
+    ExtractTable(tm.TableId, tlist)
+
+let make_cmodel_extract ( em:ExModel ) = 
+    let tlist = List<ExtractTable>()
+    for entry in em.ExTableList do
+        let newExtractTable = make_ctable_extract(entry)
+        tlist.Add ( newExtractTable )
+    tlist
 let rec getnode (name:string, nList : NodeLabel list) : NodeLabel = 
     match nList with
     | head :: tail -> 
@@ -148,9 +192,11 @@ let main argv =
     node_rel "res_sales" containment "land_sale" selectable_key ["salekey"; "jur"; "lline"]         condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
     node_rel "res_sales" containment "aprval_sale" selectable_key ["salekey"; "jur"]                condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
 
-
     
     // SQL generation
     let res = sql "res_sales"
     printfn "%s" res
+
+    let cmodel_extract = make_cmodel_extract dsl_extract
+
     0 // return an integer exit code
