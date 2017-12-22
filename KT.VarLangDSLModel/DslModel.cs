@@ -19,8 +19,7 @@ namespace KT.VarLangDSLModel
     {
         private Tuple<string,List<ExtractTable>> em;
         public ExtractModel(string modelId, List<ExtractTable> tables) =>
-            em = new Tuple<string,List<ExtractTable>>(modelId,tables);
-        
+            em = new Tuple<string,List<ExtractTable>>(modelId,tables);       
     }
 
     public struct NodeCondition

@@ -80,24 +80,35 @@ let show label =
 
 
 let source = 1 
-(*
-let variable nameStr sourceKey tabStr = 
-    let me = ExColumn()
-    me.Name <- nameStr
-    me.ExColumnName <- nameStr
-    me.DbObjectName <- tabStr
-    dsl_extract.AddCol me
-    ()
-*)
+
 let variable nameStr sourceKey tabStr = 
     dsl_extract.AddCol {
         Name = nameStr;
         ExColumnName = nameStr;
         DbObjectName = tabStr
     } 
-    
 
-//CAMA TREE CONFIG
+//convert F# to C# model
+//only so SQL gen code can be done in C#
+
+let make_ctable_extract ( tm:ExTable ) = 
+    let tlist = List<ExtractColumn>()
+    for entry in tm.ColumnList do
+        let tcol = 
+            ExtractColumn(entry.Name, entry.ExColumnName, entry.DbObjectName)
+        tlist.Add (tcol)
+    ExtractTable(tm.TableId, tlist)
+
+let make_cmodel_extract ( em:ExModel ) = 
+    let tlist = List<ExtractTable>()
+    for entry in em.ExTableList do
+        let newExtractTable = make_ctable_extract(entry)
+        tlist.Add ( newExtractTable )
+    tlist
+
+//CAMA TREE CONFIG DSL
+//perhaps move to its own module
+
 type NodeLabel() =
     [<DefaultValue>] val mutable ConfigId : string
     [<DefaultValue>] val mutable Label : string
@@ -106,8 +117,6 @@ type NodeLabel() =
     [<DefaultValue>] val mutable CondList : unit list
     
  
-
-//let nodelist = System.Collections.Generic.List<NodeLabel>()
 let mutable nodelist : NodeLabel list = []
 
 let node_label uid labelTok label dbObjTok dbObj keyTok keyList condTok condList = 
@@ -126,28 +135,32 @@ let condition = 103
 
 let eq a b = ()
 
-let node_label_attr a b c d e = ()
+type NodeRel = {
+    ConfigId : string
+    Selectable : string
+    KeyList : string list
+    CondList : unit list
+    LinkLabel : string
+    LinkKeyList : string list
+}
 
-let node_rel v1 v2 v3 v4 v5 v6 v7 v8 v9 v10= ()
+let mutable relatelist : NodeRel list = []
+let node_rel uid relTypeTok selItem selKeyTok keyList condTok condList linkTok linkItem linkKeyList =
+
+    let rel = {
+        ConfigId = uid;
+        Selectable = selItem;
+        KeyList = keyList;
+        CondList = condList;
+        LinkLabel = linkItem;
+        LinkKeyList = linkKeyList
+    }
+    relatelist <- rel ::relatelist
 
 let associative = 200
 let containment = 201
 let link = 202
 
-let make_ctable_extract ( tm:ExTable ) = 
-    let tlist = List<ExtractColumn>()
-    for entry in tm.ColumnList do
-        let tcol = 
-            ExtractColumn(entry.Name, entry.ExColumnName, entry.DbObjectName)
-        tlist.Add (tcol)
-    ExtractTable(tm.TableId, tlist)
-
-let make_cmodel_extract ( em:ExModel ) = 
-    let tlist = List<ExtractTable>()
-    for entry in em.ExTableList do
-        let newExtractTable = make_ctable_extract(entry)
-        tlist.Add ( newExtractTable )
-    tlist
 let rec getnode (name:string, nList : NodeLabel list) : NodeLabel = 
     match nList with
     | head :: tail -> 
@@ -182,8 +195,7 @@ let main argv =
 
    //CAMA TREE CONFIG   
     node_label "res_sales" label "sales" selectable "sales" selectable_key ["salekey"; "jur"] condition [eq "cur" "Y"] 
-
-    //node_label_attr "res_sales" label "sales" selectable "pardat_sale" 
+ 
 
     node_rel "res_sales" associative "pardat_sale" selectable_key ["salekey"; "jur"]                condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
     node_rel "res_sales" containment "dweldat_sale" selectable_key ["salekey"; "jur"; "card"]       condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
