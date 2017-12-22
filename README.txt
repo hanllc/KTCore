@@ -8,6 +8,7 @@ http://dungpa.github.io/fsharp-cheatsheet/
 http://imps.mcmaster.ca/pouyalarjani/fscodegen.pdf
 https://blog.inf.ed.ac.uk/aplcourse/2009/02/heterogeneous-metaprogramming-fsharp/
 
+https://tomasp.net/blog/fsharp-generic-numeric.aspx        
 
 wow - agent based CQRS
 http://apprize.info/programming/f_1/9.html

@@ -39,7 +39,7 @@ type ExModel() =
                     tab 
             xtab.AddCol col
 
-let dsl_extract = new ExModel()
+let dsl_extract = ExModel()
 
 let save name = 
     dsl_extract.ModelId <- name
@@ -59,7 +59,7 @@ let show label =
 let source = 1 
 
 let variable nameStr sourceKey tabStr = 
-    let me = new ExColumn()
+    let me = ExColumn()
     me.Name <- nameStr
     me.ExColumnName <- nameStr
     me.DbObjectName <- tabStr
@@ -67,9 +67,59 @@ let variable nameStr sourceKey tabStr =
     ()
 
 
+//CAMA TREE CONFIG
+type NodeLabel() =
+    [<DefaultValue>] val mutable ConfigId : string
+    [<DefaultValue>] val mutable Label : string
+    [<DefaultValue>] val mutable Selectable : string
+    [<DefaultValue>] val mutable KeyList : string list
+    [<DefaultValue>] val mutable CondList : unit list
+    
+ 
+
+//let nodelist = System.Collections.Generic.List<NodeLabel>()
+let mutable nodelist : NodeLabel list = []
+
+let node_label uid labelTok label dbObjTok dbObj keyTok keyList condTok condList = 
+    let node = NodeLabel()
+    node.ConfigId <- uid
+    node.Label <- label
+    node.Selectable <- dbObj
+    node.KeyList <- keyList
+    node.CondList <- condList
+    nodelist <- node :: nodelist
+    ()
+let label = 100
+let selectable = 101
+let selectable_key = 102
+let condition = 103
+
+let eq a b = ()
+
+let node_label_attr a b c d e = ()
+
+let node_rel v1 v2 v3 v4 v5 v6 v7 v8 v9 v10= ()
+
+let associative = 200
+let containment = 201
+let link = 202
+
+let rec getnode (name:string, nList : NodeLabel list) : NodeLabel = 
+    match nList with
+    | head :: tail -> 
+                        if head.ConfigId = name then head 
+                        else getnode(name,tail)
+
+    | [] -> printfn "error in function getnode, name not found"
+            NodeLabel()
+
+let sql conf:string = 
+    let nl = getnode (conf, nodelist)  
+    nl.Selectable
+
 [<EntryPoint>]
 let main argv =
-    //EXAMPLE DSL
+    //EXAMPLE EXTRACT DSL
 
     variable "var1.1" source "pardat_sale"
     variable "var1.2" source "pardat_sale"
@@ -84,5 +134,23 @@ let main argv =
     save "myextract"
 
     show "label"
+
+
+   //CAMA TREE CONFIG   
+    node_label "res_sales" label "sales" selectable "sales" selectable_key ["salekey"; "jur"] condition [eq "cur" "Y"] 
+
+    //node_label_attr "res_sales" label "sales" selectable "pardat_sale" 
+
+    node_rel "res_sales" associative "pardat_sale" selectable_key ["salekey"; "jur"]                condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+    node_rel "res_sales" containment "dweldat_sale" selectable_key ["salekey"; "jur"; "card"]       condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+    node_rel "res_sales" containment "addn_sale" selectable_key ["salekey"; "jur"; "card"; "lline"] condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+    node_rel "res_sales" containment "oby_sale" selectable_key ["salekey"; "jur"; "card"; "lline"]  condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+    node_rel "res_sales" containment "land_sale" selectable_key ["salekey"; "jur"; "lline"]         condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+    node_rel "res_sales" containment "aprval_sale" selectable_key ["salekey"; "jur"]                condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+
+
     
+    // SQL generation
+    let res = sql "res_sales"
+    printfn "%s" res
     0 // return an integer exit code
