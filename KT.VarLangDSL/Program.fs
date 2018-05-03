@@ -4,16 +4,11 @@
 // produce one or more SQL Statements
 
 
-open System
+//open System
 open System.Collections.Generic
 open FSharp.Collections
 open KT.VarLangDSLModel
-(*
-type ExColumn() =
-    [<DefaultValue>] val mutable Name : string
-    [<DefaultValue>] val mutable ExColumnName : string
-    [<DefaultValue>] val mutable DbObjectName : string
-*)
+
 //[<CLIMutable>]
 type ExColumn =
     {
@@ -133,29 +128,39 @@ let selectable = 101
 let selectable_key = 102
 let condition = 103
 
-let eq a b = ()
+let mutable cond_tuples =[]
+let eq a b = 
+    let newtup = ("eq", a, b)
+    cond_tuples <- newtup ::cond_tuples
+()
+
 
 type NodeRel = {
     ConfigId : string
+    Relation : int
     Selectable : string
     KeyList : string list
-    CondList : unit list
+    CondList : (string * string * string) list
     LinkLabel : string
     LinkKeyList : string list
 }
 
 let mutable relatelist : NodeRel list = []
+ 
 let node_rel uid relTypeTok selItem selKeyTok keyList condTok condList linkTok linkItem linkKeyList =
 
     let rel = {
         ConfigId = uid;
+        Relation = relTypeTok
         Selectable = selItem;
         KeyList = keyList;
-        CondList = condList;
+        //CondList = condList;
+        CondList = cond_tuples;
         LinkLabel = linkItem;
         LinkKeyList = linkKeyList
     }
     relatelist <- rel ::relatelist
+    cond_tuples <- []
 
 let associative = 200
 let containment = 201
@@ -173,6 +178,39 @@ let rec getnode (name:string, nList : NodeLabel list) : NodeLabel =
 let sql conf:string = 
     let nl = getnode (conf, nodelist)  
     nl.Selectable
+
+
+
+//convert F# to C# model
+//only so SQL gen code can be done in C#
+
+let make_condlist condlist =
+    let resL = List<NodeCondition>()
+    for m in condlist do
+        let (op, l, r) = m
+        let mutable a = NodeCondition()
+        a.Operator <- op
+        a.leftOperand <- l
+        a.rightOperand <- r
+        resL.Add(a)
+    resL
+let newrelate relate : NodeRelation =
+    let tmpL = make_condlist relate.CondList
+    NodeRelation (relate.ConfigId,
+                    enum<NodeRelationEnum>relate.Relation,
+                    relate.Selectable,
+                    List(relate.KeyList),
+                    tmpL,
+                    relate.LinkLabel,
+                    List(relate.LinkKeyList))
+//need to build the correct CondList
+//need to build the other two lists
+let make_csys_relate ( myrelatelist ) = 
+    let tlist = List<NodeRelation>()
+    for entry in myrelatelist do
+        let newItem = newrelate entry
+        tlist.Add ( newItem )
+    tlist
 
 [<EntryPoint>]
 let main argv =
@@ -198,7 +236,7 @@ let main argv =
  
 
     node_rel "res_sales" associative "pardat_sale" selectable_key ["salekey"; "jur"]                condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
-    node_rel "res_sales" containment "dweldat_sale" selectable_key ["salekey"; "jur"; "card"]       condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
+    node_rel "res_sales" containment "dweldat_sale" selectable_key ["salekey"; "jur"; "card"]       condition [eq "cur" "Y"; eq "cur" "Y"] link "sales" ["salekey";"jur"]
     node_rel "res_sales" containment "addn_sale" selectable_key ["salekey"; "jur"; "card"; "lline"] condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
     node_rel "res_sales" containment "oby_sale" selectable_key ["salekey"; "jur"; "card"; "lline"]  condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
     node_rel "res_sales" containment "land_sale" selectable_key ["salekey"; "jur"; "lline"]         condition [eq "cur" "Y"] link "sales" ["salekey";"jur"]
@@ -211,4 +249,9 @@ let main argv =
 
     let cmodel_extract = make_cmodel_extract dsl_extract
 
+    let cmodel_relate = make_csys_relate relatelist
+
+    let con = Converter()
+    let sl = con.BuildAttributes cmodel_extract
+    let sl2 = con.BuildStatements sl
     0 // return an integer exit code

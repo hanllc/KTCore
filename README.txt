@@ -34,6 +34,10 @@ NICE ARTICLE
 http://www.havelund.com/Publications/dsl-scala-2015.pdf
 
 
+.NET Core scripting
+https://www.strathweb.com/2017/11/c-script-runner-for-net-core-2-0/
+
+
 variable "var1.1" source "pardat_sale"
 
 use var1 var2 var3 from table1
