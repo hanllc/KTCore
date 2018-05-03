@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace KT.VarLangDSLModel
 {
@@ -41,7 +42,8 @@ namespace KT.VarLangDSLModel
                     List<string> selectableKey, List<NodeCondition> conditions) =>
             nl = new Tuple<string,string,string,List<string>,List<NodeCondition>>
                         (config,label,selectable,selectableKey,conditions);
-        
+        public string Config { get { return nl.Item1; } }
+        public string Selectable { get { return nl.Item3; } }        
     }
     public enum NodeRelationEnum : int
     {
