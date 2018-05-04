@@ -43,7 +43,9 @@ namespace KT.VarLangDSLModel
             nl = new Tuple<string,string,string,List<string>,List<NodeCondition>>
                         (config,label,selectable,selectableKey,conditions);
         public string Config { get { return nl.Item1; } }
-        public string Selectable { get { return nl.Item3; } }        
+        public string Label { get { return nl.Item2; } } 
+        public string Selectable { get { return nl.Item3; } }
+        public IReadOnlyList<string> SelectableKey { get { return nl.Item4.AsReadOnly(); } }        
     }
     public enum NodeRelationEnum : int
     {
@@ -59,7 +61,9 @@ namespace KT.VarLangDSLModel
                     string link, List<string> linkKey) =>
             nr = new Tuple<string,NodeRelationEnum,string,List<string>,List<NodeCondition>,string,List<string>>
                         (config,relation,selectable,selectableKey,conditions,link,linkKey);
-        
-    }
-    
+        public string Config { get { return nr.Item1; } }
+        public string Selectable { get { return nr.Item3; } }  
+        public string Link { get { return nr.Item6; } }
+        public IReadOnlyList<string> LinkKey { get { return nr.Item7.AsReadOnly(); } }
+    }    
 }

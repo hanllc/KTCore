@@ -271,5 +271,10 @@ let main argv =
 
     let con = Converter()
     let sl = con.BuildAttributes cmodel_extract
-    let sl2 = con.BuildStatements ("res_sales", cmodel_root, cmodel_relate, sl)
+    let s2 = con.BuildStatements ("res_sales", cmodel_root, cmodel_relate, sl)
+    let stmt = s2.Item 0
+    let (x, y) = stmt
+    let z = y
+    let z2 = z
+
     0 // return an integer exit code

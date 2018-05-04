@@ -41,13 +41,50 @@ namespace KT.VarLangDSLModel
             var croot = crootL.First();
             var from = new StringBuilder();
             from.Append("FROM ");
-            from.Append(croot.Selectable);
+            from.Append(croot.Selectable + " ");
+            //for each table involved in primary extract
+            //  form the approprite join with the rootnode
+            var joins = MakeJoins().ToString();
+            from.AppendLine(joins);
+
             var select = new StringBuilder();
             select.Append("SELECT * ");
+            //for each table involved in primary extract
+            //  form the approprite selects
+
             select.Append(from);
             var newL = new Tuple<string,string> ("primary", select.ToString());
             resultL.Add(newL);
             return resultL;
+
+            StringBuilder MakeJoins()
+            {
+                // add join if match on config, link label, need data from the table
+                var crelateL = from rel in relations
+                                where (rel.Config == config && rel.Link == croot.Label)
+                                select rel;
+                var crelateL2 = from rel2 in crelateL
+                                where s.Contains(rel2.Selectable)
+                                select rel2;
+                //for each join selectable
+                // add selectable name and join conditions
+                var jterm = new StringBuilder();
+                foreach (NodeRelation j in crelateL2)
+                {
+                    jterm.Append("LEFT OUTER JOIN " + j.Selectable);
+                    jterm.Append(" ON ");
+                    var lkeyL = croot.SelectableKey;
+                    var rkeyL = j.LinkKey;
+                    for(int i=0;i<lkeyL.Count;i++)
+                    {
+                        if (i!=0) jterm.Append(" and ");
+                        var on = $"{croot.Selectable}.{lkeyL[i]} = {j.Selectable}.{rkeyL[i]} ";
+                        jterm.AppendLine(on);
+                    } 
+                }
+                return jterm;
+            }
+
         }
     }
 }
