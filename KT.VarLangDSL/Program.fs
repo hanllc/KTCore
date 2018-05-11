@@ -8,6 +8,7 @@
 open System.Collections.Generic
 open FSharp.Collections
 open KT.VarLangDSLModel
+open System.IO
 
 //[<CLIMutable>]
 type ExColumn =
@@ -228,7 +229,6 @@ let make_csys_root myrootlist  =
 
 [<EntryPoint>]
 let main argv =
-    //EXAMPLE EXTRACT DSL
 
     variable "var1.1" source "pardat_sale"
     variable "var1.2" source "pardat_sale"
@@ -276,5 +276,10 @@ let main argv =
     let (x, y) = stmt
     let z = y
     let z2 = z
+
+
+    use streamWriter = new StreamWriter("C:\\Users\\joe.wehrli\\temp\\dsl-extract\\" + "testfile.txt", false)
+    streamWriter.Write(y)
+
 
     0 // return an integer exit code

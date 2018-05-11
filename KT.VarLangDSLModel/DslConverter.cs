@@ -45,7 +45,7 @@ namespace KT.VarLangDSLModel
             //for each table involved in primary extract
             //  form the approprite join with the rootnode
             var joins = MakeJoins().ToString();
-            from.AppendLine(joins);
+            from.Append(joins);
 
             var select = new StringBuilder();
             select.Append("SELECT * ");
@@ -79,7 +79,7 @@ namespace KT.VarLangDSLModel
                     {
                         if (i!=0) jterm.Append(" and ");
                         var on = $"{croot.Selectable}.{lkeyL[i]} = {j.Selectable}.{rkeyL[i]} ";
-                        jterm.AppendLine(on);
+                        jterm.Append(on);
                     } 
                 }
                 return jterm;
